@@ -38,6 +38,7 @@
           </div>
         </div>
         <div class="header-actions">
+          <button type="button" class="btn btn-ghost" id="btnCategories">Categorias</button>
           <button type="button" class="btn btn-ghost" id="btnOpening">Saldo inicial</button>
           <button type="button" class="btn btn-ghost" id="btnExport">Exportar JSON</button>
           <button type="button" class="btn btn-ghost" id="btnImport">Importar backup</button>
@@ -203,6 +204,86 @@
       <a href="https://pages.github.com/" style="color: var(--accent)">GitHub Pages</a>
       — publique esta pasta como site estático.
     </footer>
+
+    <div class="modal-overlay" id="modalCategories" role="dialog" aria-modal="true" aria-labelledby="modalCategoriesTitle">
+      <div class="modal modal-wide">
+        <h3 id="modalCategoriesTitle">Categorias</h3>
+        <p class="kpi-hint" style="margin-top: -0.5rem">
+          Crie rótulos novos ou altere o nome. Tipo define se a categoria aparece em receitas, despesas ou nos dois. Só é possível
+          remover uma categoria que não esteja em nenhum lançamento.
+        </p>
+        <div class="table-wrap" style="margin-top: 1rem">
+          <table class="table-compact" id="tableCategories">
+            <thead>
+              <tr>
+                <th>Nome (rótulo)</th>
+                <th>Tipo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="modalCategoriesBody"></tbody>
+          </table>
+        </div>
+        <div class="modal-actions" style="justify-content: space-between; flex-wrap: wrap; margin-top: 1rem">
+          <button type="button" class="btn btn-ghost" id="btnAddCategoryRow">+ Nova categoria</button>
+          <div style="display: flex; gap: 0.5rem">
+            <button type="button" class="btn btn-ghost" id="btnCancelCategories">Fechar</button>
+            <button type="button" class="btn btn-primary" id="btnSaveCategories">Salvar categorias</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditTx" role="dialog" aria-modal="true" aria-labelledby="modalEditTxTitle">
+      <div class="modal modal-wide">
+        <h3 id="modalEditTxTitle">Editar lançamento</h3>
+        <p class="kpi-hint" style="margin-top: -0.5rem">Altere descrição, valor, tipo, categoria, mês, status ou recorrência.</p>
+        <input type="hidden" id="editTxId" />
+        <div class="form-edit-grid">
+          <div class="toolbar-group full">
+            <label for="editDesc">Descrição</label>
+            <input type="text" id="editDesc" />
+          </div>
+          <div class="toolbar-group">
+            <label for="editAmount">Valor (R$)</label>
+            <input type="number" id="editAmount" min="0.01" step="0.01" />
+          </div>
+          <div class="toolbar-group">
+            <label for="editKind">Tipo</label>
+            <select id="editKind">
+              <option value="income">Receita</option>
+              <option value="expense">Despesa</option>
+            </select>
+          </div>
+          <div class="toolbar-group">
+            <label for="editCategory">Categoria</label>
+            <select id="editCategory"></select>
+          </div>
+          <div class="toolbar-group">
+            <label for="editMonth">Mês</label>
+            <input type="month" id="editMonth" />
+          </div>
+          <div class="toolbar-group">
+            <label for="editStatus">Status</label>
+            <select id="editStatus">
+              <option value="planned">Previsto</option>
+              <option value="realized">Realizado</option>
+            </select>
+          </div>
+          <div class="toolbar-group">
+            <label for="editRecurrence">Recorrência</label>
+            <select id="editRecurrence">
+              <option value="none">Única</option>
+              <option value="monthly">Mensal</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="btnCancelEditTx">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnSaveEditTx">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-overlay" id="modalOpening" role="dialog" aria-modal="true" aria-labelledby="modalOpeningTitle">
       <div class="modal">
