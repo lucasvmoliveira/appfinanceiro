@@ -19,6 +19,9 @@
   /** @type {{ transactions: Array<object>, openingBalance: number, categories: Array<object> }} */
   let state = loadState();
 
+  /** Referências ao DOM (preenchidas em startApp após o documento estar pronto). */
+  let el;
+
   function migrateLegacyFinancas() {
     try {
       const legacy = localStorage.getItem("financas");
@@ -258,36 +261,44 @@
     return id;
   }
 
-  const el = {
-    monthFilter: document.getElementById("monthFilter"),
-    kpiIncomeR: document.getElementById("kpiIncomeR"),
-    kpiExpenseR: document.getElementById("kpiExpenseR"),
-    kpiIncomeP: document.getElementById("kpiIncomeP"),
-    kpiExpenseP: document.getElementById("kpiExpenseP"),
-    kpiNetMonth: document.getElementById("kpiNetMonth"),
-    kpiLiquidity: document.getElementById("kpiLiquidity"),
-    form: document.getElementById("formLancamento"),
-    desc: document.getElementById("desc"),
-    amount: document.getElementById("amount"),
-    kind: document.getElementById("kind"),
-    category: document.getElementById("category"),
-    month: document.getElementById("month"),
-    status: document.getElementById("status"),
-    recurrence: document.getElementById("recurrence"),
-    openingInput: document.getElementById("openingBalance"),
-    tbody: document.querySelector("#tableTransactions tbody"),
-    btnExport: document.getElementById("btnExport"),
-    btnImport: document.getElementById("btnImport"),
-    fileImport: document.getElementById("fileImport"),
-    modalOpening: document.getElementById("modalOpening"),
-    btnSaveOpening: document.getElementById("btnSaveOpening"),
-    chartFlow: document.getElementById("chartFlow"),
-    chartProjection: document.getElementById("chartProjection"),
-    chartCategories: document.getElementById("chartCategories"),
-    modalCategories: document.getElementById("modalCategories"),
-    modalCategoriesBody: document.getElementById("modalCategoriesBody"),
-    modalEditTx: document.getElementById("modalEditTx"),
-  };
+  function cacheDom() {
+    el = {
+      monthFilter: document.getElementById("monthFilter"),
+      kpiIncomeR: document.getElementById("kpiIncomeR"),
+      kpiExpenseR: document.getElementById("kpiExpenseR"),
+      kpiIncomeP: document.getElementById("kpiIncomeP"),
+      kpiExpenseP: document.getElementById("kpiExpenseP"),
+      kpiNetMonth: document.getElementById("kpiNetMonth"),
+      kpiLiquidity: document.getElementById("kpiLiquidity"),
+      form: document.getElementById("formLancamento"),
+      desc: document.getElementById("desc"),
+      amount: document.getElementById("amount"),
+      kind: document.getElementById("kind"),
+      category: document.getElementById("category"),
+      month: document.getElementById("month"),
+      status: document.getElementById("status"),
+      recurrence: document.getElementById("recurrence"),
+      openingInput: document.getElementById("openingBalance"),
+      tbody: document.querySelector("#tableTransactions tbody"),
+      btnExport: document.getElementById("btnExport"),
+      btnImport: document.getElementById("btnImport"),
+      fileImport: document.getElementById("fileImport"),
+      modalOpening: document.getElementById("modalOpening"),
+      btnSaveOpening: document.getElementById("btnSaveOpening"),
+      chartFlow: document.getElementById("chartFlow"),
+      chartProjection: document.getElementById("chartProjection"),
+      chartCategories: document.getElementById("chartCategories"),
+      modalCategories: document.getElementById("modalCategories"),
+      modalCategoriesBody: document.getElementById("modalCategoriesBody"),
+      modalEditTx: document.getElementById("modalEditTx"),
+    };
+  }
+
+  function onClick(id, handler) {
+    const n = document.getElementById(id);
+    if (n) n.addEventListener("click", handler);
+    else console.warn("[Fluxo] Elemento não encontrado: #" + id);
+  }
 
   let chartFlow;
   let chartProjection;
@@ -332,7 +343,7 @@
 
   function renderKpis() {
     const ym = el.monthFilter.value;
-    el.openingInput.value = String(state.openingBalance);
+    if (el.openingInput) el.openingInput.value = String(state.openingBalance);
 
     if (!ym) {
       el.kpiIncomeR.textContent = "—";
@@ -397,6 +408,7 @@
         <td class="row-actions">
           <button type="button" class="btn btn-sm btn-primary js-edit" title="Alterar lançamento">Editar</button>
           <button type="button" class="btn btn-sm btn-ghost js-realize" title="Marcar como pago/recebido" ${t.status === "realized" ? "disabled" : ""}>Realizar</button>
+          <button type="button" class="btn btn-sm btn-ghost js-unrealize" title="Voltar para previsto" ${t.status === "planned" ? "disabled" : ""}>Voltar a previsto</button>
           <button type="button" class="btn btn-sm btn-danger js-delete">Excluir</button>
         </td>
       </tr>`;
@@ -417,6 +429,14 @@
         const t = state.transactions.find((x) => x.id === id);
         if (t) {
           t.status = "realized";
+          saveState();
+          fullRender();
+        }
+      });
+      tr.querySelector(".js-unrealize")?.addEventListener("click", () => {
+        const t = state.transactions.find((x) => x.id === id);
+        if (t && t.status === "realized") {
+          t.status = "planned";
           saveState();
           fullRender();
         }
@@ -442,6 +462,7 @@
 
   function renderCategoriesModalRows() {
     const tbody = el.modalCategoriesBody;
+    if (!tbody) return;
     tbody.innerHTML = state.categories
       .map((c) => {
         const kid = c.kind === "income" || c.kind === "expense" || c.kind === "both" ? c.kind : "both";
@@ -458,6 +479,7 @@
   }
 
   function appendEmptyCategoryRow() {
+    if (!el.modalCategoriesBody) return;
     const tr = document.createElement("tr");
     tr.dataset.catId = "";
     tr.innerHTML = `<td><input type="text" class="cat-label" value="" placeholder="Nome da categoria" /></td>
@@ -468,11 +490,16 @@
   }
 
   function openCategoriesModal() {
+    if (!el.modalCategories || !el.modalCategoriesBody) {
+      alert("Faltam os modais no HTML. Envie o index.html completo junto com o app.js para o GitHub.");
+      return;
+    }
     renderCategoriesModalRows();
     el.modalCategories.classList.add("open");
   }
 
   function saveCategoriesFromModal() {
+    if (!el.modalCategoriesBody) return;
     const rows = [...el.modalCategoriesBody.querySelectorAll("tr")];
     const next = [];
     const usedIds = new Set();
@@ -517,10 +544,13 @@
   }
 
   function refreshEditCategorySelect() {
-    const kind = document.getElementById("editKind").value;
-    const list = categoriesForKind(kind);
+    const kindEl = document.getElementById("editKind");
     const sel = document.getElementById("editCategory");
-    const t = state.transactions.find((x) => x.id === document.getElementById("editTxId").value);
+    const idEl = document.getElementById("editTxId");
+    if (!kindEl || !sel || !idEl) return;
+    const kind = kindEl.value;
+    const list = categoriesForKind(kind);
+    const t = state.transactions.find((x) => x.id === idEl.value);
     const current = t?.categoryId || list[0]?.id;
     sel.innerHTML = list.map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join("");
     if (list.some((c) => c.id === current)) sel.value = current;
@@ -744,123 +774,137 @@
     if (typeof Chart !== "undefined") renderCharts();
   }
 
-  el.form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const description = el.desc.value.trim();
-    const amount = parseMoneyInput(el.amount);
-    if (!description || !Number.isFinite(amount) || amount <= 0) {
-      alert("Preencha descrição e um valor válido.");
+  function startApp() {
+    cacheDom();
+    if (!el.monthFilter || !el.form || !el.tbody) {
+      console.error("[Fluxo] HTML incompleto: faltam monthFilter, formulário ou tabela.");
       return;
     }
-    const t = {
-      id: uid(),
-      description,
-      amount,
-      kind: el.kind.value,
-      categoryId: el.category.value,
-      month: el.month.value,
-      status: el.status.value,
-      recurrence: el.recurrence.value,
-      createdAt: new Date().toISOString(),
-    };
-    state.transactions.push(t);
-    el.desc.value = "";
-    el.amount.value = "";
-    saveState();
-    el.monthFilter.value = t.month;
-    fullRender();
-  });
 
-  el.kind.addEventListener("change", refreshCategoryOptions);
-
-  el.monthFilter.addEventListener("change", () => {
-    renderKpis();
-    renderTable();
-    renderCharts();
-  });
-
-  document.getElementById("btnOpening").addEventListener("click", () => {
-    el.modalOpening.classList.add("open");
-    document.getElementById("openingBalanceModal").value = String(state.openingBalance);
-  });
-
-  document.getElementById("btnCancelOpening").addEventListener("click", () => {
-    el.modalOpening.classList.remove("open");
-  });
-
-  el.btnSaveOpening.addEventListener("click", () => {
-    const v = parseFloat(String(document.getElementById("openingBalanceModal").value).replace(",", "."), 10);
-    state.openingBalance = Number.isFinite(v) ? v : 0;
-    saveState();
-    el.modalOpening.classList.remove("open");
-    fullRender();
-  });
-
-  el.modalOpening.addEventListener("click", (e) => {
-    if (e.target === el.modalOpening) el.modalOpening.classList.remove("open");
-  });
-
-  document.getElementById("btnCategories").addEventListener("click", () => openCategoriesModal());
-  document.getElementById("btnAddCategoryRow").addEventListener("click", () => appendEmptyCategoryRow());
-  document.getElementById("btnCancelCategories").addEventListener("click", () => el.modalCategories.classList.remove("open"));
-  document.getElementById("btnSaveCategories").addEventListener("click", () => saveCategoriesFromModal());
-  el.modalCategories.addEventListener("click", (e) => {
-    if (e.target === el.modalCategories) el.modalCategories.classList.remove("open");
-  });
-
-  document.getElementById("editKind").addEventListener("change", () => refreshEditCategorySelect());
-  document.getElementById("btnCancelEditTx").addEventListener("click", () => el.modalEditTx.classList.remove("open"));
-  document.getElementById("btnSaveEditTx").addEventListener("click", () => saveEditTx());
-  el.modalEditTx.addEventListener("click", (e) => {
-    if (e.target === el.modalEditTx) el.modalEditTx.classList.remove("open");
-  });
-
-  el.openingInput.addEventListener("change", () => {
-    const v = parseFloat(String(el.openingInput.value).replace(",", "."), 10);
-    state.openingBalance = Number.isFinite(v) ? v : 0;
-    saveState();
-    fullRender();
-  });
-
-  el.btnExport.addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `fluxo-backup-${monthFromDate()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  el.btnImport.addEventListener("click", () => el.fileImport.click());
-
-  el.fileImport.addEventListener("change", () => {
-    const file = el.fileImport.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result));
-        if (!Array.isArray(parsed.transactions)) throw new Error("invalid");
-        state = {
-          openingBalance: typeof parsed.openingBalance === "number" ? parsed.openingBalance : 0,
-          categories:
-            Array.isArray(parsed.categories) && parsed.categories.length
-              ? parsed.categories
-              : DEFAULT_CATEGORIES.slice(),
-          transactions: parsed.transactions,
-        };
-        saveState();
-        fullRender();
-      } catch {
-        alert("Arquivo inválido.");
+    el.form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const description = el.desc.value.trim();
+      const amount = parseMoneyInput(el.amount);
+      if (!description || !Number.isFinite(amount) || amount <= 0) {
+        alert("Preencha descrição e um valor válido.");
+        return;
       }
-      el.fileImport.value = "";
-    };
-    reader.readAsText(file);
-  });
+      const t = {
+        id: uid(),
+        description,
+        amount,
+        kind: el.kind.value,
+        categoryId: el.category.value,
+        month: el.month.value,
+        status: el.status.value,
+        recurrence: el.recurrence.value,
+        createdAt: new Date().toISOString(),
+      };
+      state.transactions.push(t);
+      el.desc.value = "";
+      el.amount.value = "";
+      saveState();
+      el.monthFilter.value = t.month;
+      fullRender();
+    });
 
-  populateMonthSelects();
-  el.monthFilter.value = monthFromDate();
-  refreshCategoryOptions();
-  fullRender();
+    el.kind.addEventListener("change", refreshCategoryOptions);
+
+    el.monthFilter.addEventListener("change", () => {
+      renderKpis();
+      renderTable();
+      renderCharts();
+    });
+
+    onClick("btnOpening", () => {
+      el.modalOpening?.classList.add("open");
+      const m = document.getElementById("openingBalanceModal");
+      if (m) m.value = String(state.openingBalance);
+    });
+
+    onClick("btnCancelOpening", () => el.modalOpening?.classList.remove("open"));
+
+    el.btnSaveOpening?.addEventListener("click", () => {
+      const m = document.getElementById("openingBalanceModal");
+      const v = parseFloat(String(m?.value ?? "").replace(",", "."), 10);
+      state.openingBalance = Number.isFinite(v) ? v : 0;
+      saveState();
+      el.modalOpening?.classList.remove("open");
+      fullRender();
+    });
+
+    el.modalOpening?.addEventListener("click", (e) => {
+      if (e.target === el.modalOpening) el.modalOpening.classList.remove("open");
+    });
+
+    onClick("btnCategories", () => openCategoriesModal());
+    onClick("btnAddCategoryRow", () => appendEmptyCategoryRow());
+    onClick("btnCancelCategories", () => el.modalCategories?.classList.remove("open"));
+    onClick("btnSaveCategories", () => saveCategoriesFromModal());
+    el.modalCategories?.addEventListener("click", (e) => {
+      if (e.target === el.modalCategories) el.modalCategories.classList.remove("open");
+    });
+
+    document.getElementById("editKind")?.addEventListener("change", () => refreshEditCategorySelect());
+    onClick("btnCancelEditTx", () => el.modalEditTx?.classList.remove("open"));
+    onClick("btnSaveEditTx", () => saveEditTx());
+    el.modalEditTx?.addEventListener("click", (e) => {
+      if (e.target === el.modalEditTx) el.modalEditTx.classList.remove("open");
+    });
+
+    el.openingInput?.addEventListener("change", () => {
+      const v = parseFloat(String(el.openingInput.value).replace(",", "."), 10);
+      state.openingBalance = Number.isFinite(v) ? v : 0;
+      saveState();
+      fullRender();
+    });
+
+    el.btnExport?.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `fluxo-backup-${monthFromDate()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    el.btnImport?.addEventListener("click", () => el.fileImport?.click());
+
+    el.fileImport?.addEventListener("change", () => {
+      const file = el.fileImport.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result));
+          if (!Array.isArray(parsed.transactions)) throw new Error("invalid");
+          state = {
+            openingBalance: typeof parsed.openingBalance === "number" ? parsed.openingBalance : 0,
+            categories:
+              Array.isArray(parsed.categories) && parsed.categories.length
+                ? parsed.categories
+                : DEFAULT_CATEGORIES.slice(),
+            transactions: parsed.transactions,
+          };
+          saveState();
+          fullRender();
+        } catch {
+          alert("Arquivo inválido.");
+        }
+        el.fileImport.value = "";
+      };
+      reader.readAsText(file);
+    });
+
+    populateMonthSelects();
+    el.monthFilter.value = monthFromDate();
+    refreshCategoryOptions();
+    fullRender();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startApp);
+  } else {
+    startApp();
+  }
 })();
