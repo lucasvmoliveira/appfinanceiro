@@ -409,6 +409,34 @@ tr:hover td {
   box-shadow: var(--shadow);
 }
 
+.modal-wide {
+  max-width: min(640px, 100%);
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 0.5rem 0.45rem;
+  vertical-align: middle;
+}
+
+.table-compact input[type="text"],
+.table-compact select {
+  width: 100%;
+  margin: 0;
+}
+
+.form-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: end;
+}
+
+.form-edit-grid .full {
+  grid-column: 1 / -1;
+}
+
 .modal h3 {
   margin: 0 0 1rem;
   font-size: 1.1rem;
