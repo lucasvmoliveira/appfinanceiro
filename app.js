@@ -238,6 +238,26 @@
     return c ? c.label : id;
   }
 
+  function slugFromLabel(label) {
+    let s = label
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, "");
+    return s || "categoria";
+  }
+
+  function uniqueCategoryId(label, usedIds) {
+    let base = slugFromLabel(label);
+    let id = base;
+    let n = 0;
+    while (usedIds.has(id)) {
+      id = base + "_" + ++n;
+    }
+    return id;
+  }
+
   const el = {
     monthFilter: document.getElementById("monthFilter"),
     kpiIncomeR: document.getElementById("kpiIncomeR"),
@@ -264,6 +284,9 @@
     chartFlow: document.getElementById("chartFlow"),
     chartProjection: document.getElementById("chartProjection"),
     chartCategories: document.getElementById("chartCategories"),
+    modalCategories: document.getElementById("modalCategories"),
+    modalCategoriesBody: document.getElementById("modalCategoriesBody"),
+    modalEditTx: document.getElementById("modalEditTx"),
   };
 
   let chartFlow;
@@ -372,6 +395,7 @@
         <td>${statusBadge}</td>
         <td>${rec}</td>
         <td class="row-actions">
+          <button type="button" class="btn btn-sm btn-primary js-edit" title="Alterar lançamento">Editar</button>
           <button type="button" class="btn btn-sm btn-ghost js-realize" title="Marcar como pago/recebido" ${t.status === "realized" ? "disabled" : ""}>Realizar</button>
           <button type="button" class="btn btn-sm btn-danger js-delete">Excluir</button>
         </td>
@@ -381,6 +405,7 @@
 
     el.tbody.querySelectorAll("tr[data-id]").forEach((tr) => {
       const id = tr.getAttribute("data-id");
+      tr.querySelector(".js-edit")?.addEventListener("click", () => openEditTxModal(id));
       tr.querySelector(".js-delete")?.addEventListener("click", () => {
         if (confirm("Excluir este lançamento?")) {
           state.transactions = state.transactions.filter((t) => t.id !== id);
@@ -403,6 +428,144 @@
     const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
+  }
+
+  function kindSelectHtml(selected) {
+    const opts = [
+      ["income", "Só receitas"],
+      ["expense", "Só despesas"],
+      ["both", "Receitas e despesas"],
+    ];
+    const k = ["income", "expense", "both"].includes(selected) ? selected : "both";
+    return opts.map(([v, lab]) => `<option value="${v}"${v === k ? " selected" : ""}>${lab}</option>`).join("");
+  }
+
+  function renderCategoriesModalRows() {
+    const tbody = el.modalCategoriesBody;
+    tbody.innerHTML = state.categories
+      .map((c) => {
+        const kid = c.kind === "income" || c.kind === "expense" || c.kind === "both" ? c.kind : "both";
+        return `<tr data-cat-id="${escapeHtml(c.id)}">
+        <td><input type="text" class="cat-label" value="${escapeHtml(c.label)}" /></td>
+        <td><select class="cat-kind">${kindSelectHtml(kid)}</select></td>
+        <td><button type="button" class="btn btn-sm btn-danger cat-remove">Remover</button></td>
+      </tr>`;
+      })
+      .join("");
+    tbody.querySelectorAll(".cat-remove").forEach((btn) => {
+      btn.addEventListener("click", () => btn.closest("tr")?.remove());
+    });
+  }
+
+  function appendEmptyCategoryRow() {
+    const tr = document.createElement("tr");
+    tr.dataset.catId = "";
+    tr.innerHTML = `<td><input type="text" class="cat-label" value="" placeholder="Nome da categoria" /></td>
+      <td><select class="cat-kind">${kindSelectHtml("expense")}</select></td>
+      <td><button type="button" class="btn btn-sm btn-danger cat-remove">Remover</button></td>`;
+    tr.querySelector(".cat-remove").addEventListener("click", () => tr.remove());
+    el.modalCategoriesBody.appendChild(tr);
+  }
+
+  function openCategoriesModal() {
+    renderCategoriesModalRows();
+    el.modalCategories.classList.add("open");
+  }
+
+  function saveCategoriesFromModal() {
+    const rows = [...el.modalCategoriesBody.querySelectorAll("tr")];
+    const next = [];
+    const usedIds = new Set();
+
+    rows.forEach((tr) => {
+      const existingId = (tr.dataset.catId || "").trim();
+      const label = tr.querySelector(".cat-label")?.value.trim() || "";
+      const kindSel = tr.querySelector(".cat-kind");
+      const kind = kindSel && ["income", "expense", "both"].includes(kindSel.value) ? kindSel.value : "both";
+      if (!label) return;
+
+      let id = existingId;
+      if (!id) {
+        id = uniqueCategoryId(label, usedIds);
+      }
+      usedIds.add(id);
+      next.push({ id, label, kind });
+    });
+
+    const newIdSet = new Set(next.map((c) => c.id));
+    const blocked = [];
+    state.categories.forEach((old) => {
+      if (!newIdSet.has(old.id)) {
+        const inUse = state.transactions.some((t) => t.categoryId === old.id);
+        if (inUse) blocked.push(old.label);
+      }
+    });
+
+    if (blocked.length) {
+      alert(
+        "Você removeu categorias que ainda têm lançamentos:\n· " +
+          blocked.join("\n· ") +
+          "\n\nAltere a categoria desses lançamentos (Editar) ou recoloque a linha na tabela antes de salvar."
+      );
+      return;
+    }
+
+    state.categories = next;
+    saveState();
+    el.modalCategories.classList.remove("open");
+    fullRender();
+  }
+
+  function refreshEditCategorySelect() {
+    const kind = document.getElementById("editKind").value;
+    const list = categoriesForKind(kind);
+    const sel = document.getElementById("editCategory");
+    const t = state.transactions.find((x) => x.id === document.getElementById("editTxId").value);
+    const current = t?.categoryId || list[0]?.id;
+    sel.innerHTML = list.map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join("");
+    if (list.some((c) => c.id === current)) sel.value = current;
+    else if (list.length) sel.value = list[0].id;
+  }
+
+  function openEditTxModal(id) {
+    const t = state.transactions.find((x) => x.id === id);
+    if (!t) return;
+    document.getElementById("editTxId").value = t.id;
+    document.getElementById("editDesc").value = t.description;
+    document.getElementById("editAmount").value = String(t.amount);
+    document.getElementById("editKind").value = t.kind;
+    document.getElementById("editMonth").value = t.month;
+    document.getElementById("editStatus").value = t.status;
+    document.getElementById("editRecurrence").value = t.recurrence || "none";
+    refreshEditCategorySelect();
+    const sel = document.getElementById("editCategory");
+    if (state.categories.some((c) => c.id === t.categoryId)) sel.value = t.categoryId;
+    el.modalEditTx.classList.add("open");
+  }
+
+  function saveEditTx() {
+    const id = document.getElementById("editTxId").value;
+    const t = state.transactions.find((x) => x.id === id);
+    if (!t) return;
+
+    const description = document.getElementById("editDesc").value.trim();
+    const amount = parseFloat(String(document.getElementById("editAmount").value).replace(",", "."), 10);
+    if (!description || !Number.isFinite(amount) || amount <= 0) {
+      alert("Preencha descrição e um valor válido.");
+      return;
+    }
+
+    t.description = description;
+    t.amount = amount;
+    t.kind = document.getElementById("editKind").value;
+    t.categoryId = document.getElementById("editCategory").value;
+    t.month = document.getElementById("editMonth").value;
+    t.status = document.getElementById("editStatus").value;
+    t.recurrence = document.getElementById("editRecurrence").value;
+
+    saveState();
+    el.modalEditTx.classList.remove("open");
+    fullRender();
   }
 
   function renderCharts() {
@@ -635,6 +798,21 @@
 
   el.modalOpening.addEventListener("click", (e) => {
     if (e.target === el.modalOpening) el.modalOpening.classList.remove("open");
+  });
+
+  document.getElementById("btnCategories").addEventListener("click", () => openCategoriesModal());
+  document.getElementById("btnAddCategoryRow").addEventListener("click", () => appendEmptyCategoryRow());
+  document.getElementById("btnCancelCategories").addEventListener("click", () => el.modalCategories.classList.remove("open"));
+  document.getElementById("btnSaveCategories").addEventListener("click", () => saveCategoriesFromModal());
+  el.modalCategories.addEventListener("click", (e) => {
+    if (e.target === el.modalCategories) el.modalCategories.classList.remove("open");
+  });
+
+  document.getElementById("editKind").addEventListener("change", () => refreshEditCategorySelect());
+  document.getElementById("btnCancelEditTx").addEventListener("click", () => el.modalEditTx.classList.remove("open"));
+  document.getElementById("btnSaveEditTx").addEventListener("click", () => saveEditTx());
+  el.modalEditTx.addEventListener("click", (e) => {
+    if (e.target === el.modalEditTx) el.modalEditTx.classList.remove("open");
   });
 
   el.openingInput.addEventListener("change", () => {
