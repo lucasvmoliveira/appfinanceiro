@@ -40,6 +40,7 @@
           <button type="button" class="btn btn-ghost" id="btnOpening">Saldo inicial</button>
           <button type="button" class="btn btn-ghost" id="btnExport">Exportar JSON</button>
           <button type="button" class="btn btn-ghost" id="btnImport">Importar backup</button>
+          <button type="button" class="btn btn-ghost" id="btnInsights">Insights (IA)</button>
           <input type="file" id="fileImport" accept="application/json" class="sr-only" tabindex="-1" />
         </div>
       </div>
@@ -279,6 +280,37 @@
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="btnCancelEditTx">Cancelar</button>
           <button type="button" class="btn btn-primary" id="btnSaveEditTx">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modalInsights" role="dialog" aria-modal="true" aria-labelledby="modalInsightsTitle">
+      <div class="modal modal-wide">
+        <h3 id="modalInsightsTitle">Insights com IA (automático)</h3>
+        <p class="kpi-hint" style="margin-top: -0.5rem">
+          Gratuito: use uma
+          <a href="https://www.netlify.com/" target="_blank" rel="noopener" style="color: var(--accent)">Netlify</a>
+          (plano free) + chave
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color: var(--accent)">Groq</a>
+          (tier gratuito). A chave da IA fica só no servidor Netlify — não no GitHub público. Cole abaixo a URL da função
+          <code style="font-size: 0.8rem">/.netlify/functions/fluxo-insights</code> e clique em Gerar.
+        </p>
+        <div class="toolbar-group" style="margin-top: 1rem">
+          <label for="insightsUrl">URL da função Netlify</label>
+          <input type="url" id="insightsUrl" placeholder="https://seu-app.netlify.app/.netlify/functions/fluxo-insights" autocomplete="off" />
+        </div>
+        <div class="toolbar-group" style="margin-top: 0.75rem">
+          <label for="insightsSecret">Senha opcional (X-Fluxo-Secret, se configurou no Netlify)</label>
+          <input type="password" id="insightsSecret" placeholder="Deixe vazio se não usou FLUXO_INSIGHTS_SECRET" autocomplete="off" />
+        </div>
+        <div class="modal-actions" style="justify-content: flex-start; margin-top: 0.75rem">
+          <button type="button" class="btn btn-ghost" id="btnSaveInsightsConfig">Salvar configuração</button>
+          <button type="button" class="btn btn-primary" id="btnGenerateInsights">Gerar insights agora</button>
+        </div>
+        <p class="kpi-hint" id="insightsStatus" style="margin-top: 0.75rem; min-height: 1.25rem"></p>
+        <pre class="insights-output" id="insightsOutput" hidden></pre>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="btnCloseInsights">Fechar</button>
         </div>
       </div>
     </div>
