@@ -241,6 +241,147 @@
     return c ? c.label : id;
   }
 
+  /** Texto agregado para enviar à IA (sem expor JSON bruto completo). */
+  function buildFinancialSummaryForAi() {
+    const lines = [];
+    lines.push("=== RESUMO FINANCEIRO (BRL) — app Fluxo ===");
+    lines.push("Moeda: BRL. Valores arredondados na exibição.");
+    lines.push("Saldo inicial (antes do 1º mês com lançamentos): " + formatBRL(state.openingBalance));
+    lines.push("Gerado em: " + new Date().toISOString());
+    lines.push("");
+
+    const monthsAll = sortedUniqueMonthsFromData();
+    const months = monthsAll.slice(-24);
+
+    if (!months.length) {
+      lines.push("Nenhum lançamento cadastrado ainda.");
+      return lines.join("\n");
+    }
+
+    lines.push("--- Por mês (últimos " + months.length + " com dados) — realizado / previsto / resultado ---");
+    months.forEach((ym) => {
+      const f = flowsForMonth(ym);
+      lines.push("");
+      lines.push(ym + " (" + formatMonthLabel(ym) + ")");
+      lines.push(
+        "  Receitas: realizado " +
+          formatBRL(f.incomeR) +
+          " | previsto " +
+          formatBRL(f.incomeP)
+      );
+      lines.push(
+        "  Despesas: realizado " +
+          formatBRL(f.expenseR) +
+          " | previsto " +
+          formatBRL(f.expenseP)
+      );
+      lines.push("  Resultado líquido do mês (tudo): " + formatBRL(f.netTotal));
+      lines.push("  Saldo acumulado ao fim do mês: " + formatBRL(balanceBeforeMonth(addMonths(ym, 1))));
+    });
+
+    lines.push("");
+    lines.push("--- Despesas por categoria (janela de 12 meses, regra do app) ---");
+    const catMap = categoryExpenseTotals(null);
+    const sortedCat = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+    if (!sortedCat.length) lines.push("  (nenhuma despesa na janela)");
+    else sortedCat.slice(0, 20).forEach(([k, v]) => lines.push("  " + k + ": " + formatBRL(v)));
+
+    lines.push("");
+    lines.push("--- Itens com recorrência MENSAL (a partir do mês de referência) ---");
+    const rec = state.transactions.filter((t) => t.recurrence === "monthly");
+    if (!rec.length) lines.push("  (nenhum)");
+    else
+      rec.forEach((t) => {
+        lines.push(
+          "  Desde " +
+            t.month +
+            ": " +
+            t.description +
+            " | " +
+            (t.kind === "income" ? "receita" : "despesa") +
+            " " +
+            formatBRL(t.amount) +
+            " | " +
+            t.status +
+            " | " +
+            categoryLabel(t.categoryId)
+        );
+      });
+
+    lines.push("");
+    lines.push("Total de lançamentos no cadastro: " + state.transactions.length);
+    return lines.join("\n");
+  }
+
+  function openInsightsModal() {
+    const urlEl = document.getElementById("insightsUrl");
+    const secEl = document.getElementById("insightsSecret");
+    const st = document.getElementById("insightsStatus");
+    const out = document.getElementById("insightsOutput");
+    if (urlEl) urlEl.value = localStorage.getItem("fluxo_insights_url") || "";
+    if (secEl) secEl.value = localStorage.getItem("fluxo_insights_secret") || "";
+    if (st) st.textContent = "";
+    if (out) {
+      out.textContent = "";
+      out.hidden = true;
+    }
+    document.getElementById("modalInsights")?.classList.add("open");
+  }
+
+  async function generateInsights() {
+    const urlEl = document.getElementById("insightsUrl");
+    const url = urlEl?.value.trim() || "";
+    const secret = document.getElementById("insightsSecret")?.value.trim() || "";
+    const statusEl = document.getElementById("insightsStatus");
+    const out = document.getElementById("insightsOutput");
+    const btn = document.getElementById("btnGenerateInsights");
+
+    if (!url) {
+      if (statusEl) statusEl.textContent = "Informe a URL da função Netlify (termina em /fluxo-insights).";
+      return;
+    }
+
+    if (statusEl) statusEl.textContent = "Gerando… pode levar alguns segundos.";
+    if (out) {
+      out.hidden = true;
+      out.textContent = "";
+    }
+    if (btn) btn.disabled = true;
+
+    try {
+      const summary = buildFinancialSummaryForAi();
+      const headers = { "Content-Type": "application/json" };
+      if (secret) headers["X-Fluxo-Secret"] = secret;
+
+      const r = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ summary }),
+      });
+
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (statusEl) statusEl.textContent = data.error || "Erro HTTP " + r.status;
+        return;
+      }
+      if (data.text && out) {
+        out.textContent = data.text;
+        out.hidden = false;
+        if (statusEl) statusEl.textContent = "Pronto.";
+      } else if (statusEl) {
+        statusEl.textContent = data.error || "Resposta sem texto.";
+      }
+    } catch (e) {
+      if (statusEl) {
+        statusEl.textContent =
+          "Rede/CORS: use a URL exata da Netlify (HTTPS), ou abra o app pelo mesmo domínio. " +
+          (e && e.message ? e.message : "");
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function slugFromLabel(label) {
     let s = label
       .normalize("NFD")
@@ -843,6 +984,23 @@
     onClick("btnSaveCategories", () => saveCategoriesFromModal());
     el.modalCategories?.addEventListener("click", (e) => {
       if (e.target === el.modalCategories) el.modalCategories.classList.remove("open");
+    });
+
+    onClick("btnInsights", () => openInsightsModal());
+    onClick("btnCloseInsights", () => document.getElementById("modalInsights")?.classList.remove("open"));
+    document.getElementById("modalInsights")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
+    });
+    onClick("btnSaveInsightsConfig", () => {
+      const u = document.getElementById("insightsUrl")?.value.trim() || "";
+      const s = document.getElementById("insightsSecret")?.value || "";
+      localStorage.setItem("fluxo_insights_url", u);
+      localStorage.setItem("fluxo_insights_secret", s);
+      const st = document.getElementById("insightsStatus");
+      if (st) st.textContent = "Configuração salva neste navegador.";
+    });
+    onClick("btnGenerateInsights", () => {
+      generateInsights();
     });
 
     document.getElementById("editKind")?.addEventListener("change", () => refreshEditCategorySelect());
