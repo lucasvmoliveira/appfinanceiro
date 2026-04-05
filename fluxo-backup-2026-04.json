@@ -1,0 +1,277 @@
+{
+  "openingBalance": 0,
+  "categories": [
+    {
+      "id": "salario",
+      "label": "Salário / renda fixa",
+      "kind": "income"
+    },
+    {
+      "id": "freelance",
+      "label": "Freelance / extras",
+      "kind": "income"
+    },
+    {
+      "id": "investimentos",
+      "label": "Investimentos",
+      "kind": "income"
+    },
+    {
+      "id": "moradia",
+      "label": "Moradia",
+      "kind": "expense"
+    },
+    {
+      "id": "alimentacao",
+      "label": "Alimentação",
+      "kind": "expense"
+    },
+    {
+      "id": "transporte",
+      "label": "Transporte",
+      "kind": "expense"
+    },
+    {
+      "id": "saude",
+      "label": "Saúde",
+      "kind": "expense"
+    },
+    {
+      "id": "lazer",
+      "label": "Lazer",
+      "kind": "expense"
+    },
+    {
+      "id": "servicos",
+      "label": "Assinaturas / serviços",
+      "kind": "expense"
+    },
+    {
+      "id": "outros",
+      "label": "Outros",
+      "kind": "both"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "601376b3-7b9a-4bfe-b90a-8d9063d2d29b",
+      "description": "Aluguel Abril",
+      "amount": 1120,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:14:47.075Z"
+    },
+    {
+      "id": "8528e231-19eb-4095-9fe7-c151f7236798",
+      "description": "Carro",
+      "amount": 1650,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:15:08.769Z"
+    },
+    {
+      "id": "5c09d0e9-3629-4433-bdb7-efc75570a663",
+      "description": "Internet",
+      "amount": 130,
+      "kind": "expense",
+      "categoryId": "servicos",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:15:27.770Z"
+    },
+    {
+      "id": "0d10d9c2-fec5-467f-b1f1-6993e11521e1",
+      "description": "Moto",
+      "amount": 730,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:15:47.486Z"
+    },
+    {
+      "id": "852bdaf8-8c04-4f68-a5db-d74b7edfe9ca",
+      "description": "Salario",
+      "amount": 11000,
+      "kind": "income",
+      "categoryId": "salario",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:18:53.915Z"
+    },
+    {
+      "id": "a887526f-bc28-44b5-a634-a1e3d8aa00ca",
+      "description": "Inglês",
+      "amount": 405,
+      "kind": "expense",
+      "categoryId": "servicos",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:20:05.710Z"
+    },
+    {
+      "id": "ca23c9c7-cc3a-4f1b-8dc7-79fa56fa225c",
+      "description": "Empréstimos",
+      "amount": 1870,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:20:52.025Z"
+    },
+    {
+      "id": "7d584f2e-bd8d-4c3e-b7b5-ce6e002b5df6",
+      "description": "Cury APE",
+      "amount": 201,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "monthly",
+      "createdAt": "2026-04-04T21:23:36.072Z"
+    },
+    {
+      "id": "9f49f7a6-03a3-4365-bbc9-6174d297e412",
+      "description": "Unica Cury",
+      "amount": 4000,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2026-12",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:24:23.768Z"
+    },
+    {
+      "id": "4fd1d643-879f-4ea6-8e85-c0ce19b8aa01",
+      "description": "Unica Cury",
+      "amount": 4000,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2027-12",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:24:56.184Z"
+    },
+    {
+      "id": "1f5b1e14-9a1f-418d-9ea4-04c556d852c0",
+      "description": "Unica Cury",
+      "amount": 4000,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2028-12",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:25:11.917Z"
+    },
+    {
+      "id": "bda1c290-8ecf-4d2f-a069-16bede1a09bf",
+      "description": "Mais",
+      "amount": 8311,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:28:07.761Z"
+    },
+    {
+      "id": "84b0b43e-f281-4cae-af20-ee6c2d11e7a7",
+      "description": "PicPay",
+      "amount": 1400,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:29:54.707Z"
+    },
+    {
+      "id": "351e3fd3-7d77-40a1-bbea-c724043a01fa",
+      "description": "Nubank PF",
+      "amount": 2009,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:33:14.416Z"
+    },
+    {
+      "id": "65ef4abd-b2b8-4a6f-9601-a5b06dbf79d4",
+      "description": "Inter",
+      "amount": 1200,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:33:51.365Z"
+    },
+    {
+      "id": "e946ceca-3d4d-4d5f-a464-f6a76b531930",
+      "description": "Pagseguro",
+      "amount": 150,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:34:17.312Z"
+    },
+    {
+      "id": "471175e0-d75e-4e22-a787-6c358f51cdcf",
+      "description": "Pagleve",
+      "amount": 878,
+      "kind": "expense",
+      "categoryId": "moradia",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:36:12.945Z"
+    },
+    {
+      "id": "f336c34d-1094-4787-9941-30695d75171d",
+      "description": "Saldo abril",
+      "amount": 300,
+      "kind": "income",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:38:21.756Z"
+    },
+    {
+      "id": "d80300ab-ab3c-4981-8e93-b9b28a4c567d",
+      "description": "Cartoes",
+      "amount": 4200,
+      "kind": "income",
+      "categoryId": "investimentos",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:39:05.704Z"
+    },
+    {
+      "id": "2d626b54-824f-4a1b-b29b-0ef90cc6e3bc",
+      "description": "Hoje",
+      "amount": 2912,
+      "kind": "expense",
+      "categoryId": "outros",
+      "month": "2026-04",
+      "status": "planned",
+      "recurrence": "none",
+      "createdAt": "2026-04-04T21:45:27.917Z"
+    }
+  ]
+}
