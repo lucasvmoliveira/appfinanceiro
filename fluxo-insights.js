@@ -19,14 +19,6 @@ exports.handler = async (event) => {
 
   const groqKey = process.env.GROQ_API_KEY || "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";
 
-  if (!groqKey || groqKey === "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") {
-    return {
-      statusCode: 503,
-      headers,
-      body: JSON.stringify({ error: "Chave não configurada" }),
-    };
-  }
-
   let body;
   try {
     body = JSON.parse(event.body || "{}");
