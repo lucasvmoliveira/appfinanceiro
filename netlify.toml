@@ -2,10 +2,9 @@
   publish = "."
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
-
-[[plugins]]
-
 [build.environment]
   GROQ_API_KEY = "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"
+
+
+
+
