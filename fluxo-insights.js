@@ -1,9 +1,3 @@
-/**
- * Netlify Function — fluxo-insights.js
- * Recebe resumo financeiro e chama a API Groq.
- * Configure: GROQ_API_KEY nas Environment Variables da Netlify.
- */
-
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
@@ -23,17 +17,13 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: "Use POST" }) };
   }
 
-  const groqKey = process.env.GROQ_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY || "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";
 
-  if (!groqKey) {
-    const allKeys = Object.keys(process.env).join(", ");
+  if (!groqKey || groqKey === "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") {
     return {
       statusCode: 503,
       headers,
-      body: JSON.stringify({
-        error: "Servidor sem GROQ_API_KEY configurada",
-        debug_vars_found: allKeys,
-      }),
+      body: JSON.stringify({ error: "Chave não configurada" }),
     };
   }
 
@@ -80,9 +70,7 @@ Inclua: (1) visão geral do padrão de caixa, (2) riscos ou alertas, (3) até 7 
     return {
       statusCode: 502,
       headers,
-      body: JSON.stringify({
-        error: data.error?.message || "Erro na API Groq",
-      }),
+      body: JSON.stringify({ error: data.error?.message || "Erro na API Groq" }),
     };
   }
 
